@@ -11,9 +11,10 @@ import (
 
 func getSessions(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rows, err := db.Query("SELECT * FROM session")
+		// Query to get all sessions
+		rows, err := db.Query("SELECT id, session_type FROM session ORDER BY id DESC")
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Error querying sessions: %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -22,16 +23,67 @@ func getSessions(db *sql.DB) gin.HandlerFunc {
 		var sessions []Session
 
 		for rows.Next() {
-			var temp Session
-			if err := rows.Scan(&temp.ID, &temp.SessionType); err != nil {
-				log.Fatal(err)
+			var s Session
+			if err := rows.Scan(&s.ID, &s.SessionType); err != nil {
+				log.Printf("Error scanning sessions: %v\n", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			sessions = append(sessions, temp)
+			sessions = append(sessions, s)
 		}
 
-		c.JSON(http.StatusOK, sessions)
+		var detailedSessions []DetailedSession
+
+		for _, session := range sessions {
+			var events []Event
+			eventRows, err := db.Query("SELECT * FROM event WHERE session_id = ? ORDER BY timestamp ASC", session.ID)
+			if err != nil {
+				log.Printf("Error querying events: %v\n", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			var totalPower int
+
+			for eventRows.Next() {
+				var e Event
+				if err := eventRows.Scan(&e.ID, &e.SessionID, &e.Timestamp, &e.Capacity, &e.PowerDraw); err != nil {
+					log.Printf("Error scanning events: %v\n", err)
+					eventRows.Close() // Close the eventRows before returning
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+				totalPower += e.PowerDraw
+				events = append(events, e)
+			}
+			eventRows.Close()
+
+			if len(events) > 0 {
+				start := events[0].Timestamp
+				end := events[len(events)-1].Timestamp
+				duration := calculateDuration(start, end)
+				capacityStart := events[0].Capacity
+				capacityEnd := events[len(events)-1].Capacity
+				capacityDelta := capacityEnd - capacityStart
+				averagePower := totalPower / len(events)
+
+				detailedSession := DetailedSession{
+					ID:                        session.ID,
+					SessionType:               session.SessionType,
+					Start:                     start,
+					End:                       end,
+					Duration:                  duration,
+					Capacity_Start:            capacityStart,
+					Capacity_End:              capacityEnd,
+					Capacity_Delta:            capacityDelta,
+					Average_Power_Consumption: averagePower,
+				}
+
+				detailedSessions = append(detailedSessions, detailedSession)
+			}
+		}
+
+		c.JSON(http.StatusOK, detailedSessions)
 	}
 }
 

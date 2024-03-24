@@ -17,6 +17,9 @@ func main() {
 	defer db.Close()
 
 	r := gin.Default()
+
+	r.Use(CORSMiddleware())
+
 	r.GET("/sessions", getSessions(db))
 	r.GET("/sessions/:id", getSession(db))
 	r.GET("/sessions/:id/events", getSessionEvents(db))
