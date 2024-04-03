@@ -26,7 +26,7 @@ echo "You can now run batt_log from the terminal."
 echo "Detected init: $INIT_SYSTEM"
 read -p "Do you want to install batt_log as a service? [Y/n]:" install_service
     
-if [[ "${install_service,,}" =~ ^(y|)$ ]]; then
+if [[ ! "${install_service,,}" =~ ^(y|)$ ]]; then
     exit 0
 fi
 
