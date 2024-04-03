@@ -1,53 +1,57 @@
+pub mod database;
+
+use batt_log::Power;
+use database::{create_event, create_session, initialize_tables};
+use rusqlite::Connection;
 use std::{thread::sleep, time::Duration};
 
-use batt_log::{create_event, create_session, initialize_tables, Power};
-use rusqlite::Connection;
-
-const POLLING_INTERVAL: u8 = 60; // seconds
+const POLLING_INTERVAL: Duration = Duration::from_secs(60);
 const DB_PATH: &str = "/home/marco/.cache/batt.db";
 
 fn main() {
     let conn = Connection::open(DB_PATH).expect("Failed to connect to database");
 
-    initialize_tables(&conn).unwrap_or_else(|e| {
-        eprintln!("Failed to initialize tables: {}", e);
-        std::process::exit(1);
-    });
+    initialize_tables(&conn).expect("Failed to initialize tables");
 
     let mut power: Power = Power::default();
+
     power.update().unwrap_or_else(|e| {
-        eprintln!("Failed to get power levels: {}", e);
+        eprintln!("Failed to initialize power: {}", e);
         std::process::exit(1);
     });
 
-    let mut session = match create_session(&power, &conn) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("Failed to create new session: {}", e);
-            std::process::exit(1);
-        }
-    };
+    let session = create_session(&power, &conn).expect("Failed to create initial session");
 
+    main_loop(power, conn, session)
+}
+
+fn main_loop(mut power: Power, conn: Connection, mut session: usize) -> ! {
     loop {
         let curr = power.status.clone();
-        if let Err(e) = power.update() {
-            eprintln!("Error: {}", e);
-            sleep(Duration::from_secs(POLLING_INTERVAL.into()));
-            continue;
-        }
 
-        if curr != power.status {
-            if let Ok(s) = create_session(&power, &conn) {
-                session = s;
-            } else {
-                eprintln!("Failed to create new session");
+        if let Ok(_) = power.update() {
+            change_session_if_status_changed(curr, &power, &conn, &mut session);
+
+            if let Err(e) = create_event(&power, &conn, &session) {
+                eprintln!("Failed to create event: {}", e);
             }
         }
 
-        if let Err(e) = create_event(&power, &conn, &session) {
-            eprintln!("Failed to create event: {}", e);
-        }
+        sleep(POLLING_INTERVAL);
+    }
+}
 
-        sleep(Duration::from_secs(POLLING_INTERVAL.into()));
+fn change_session_if_status_changed(
+    curr: batt_log::Status,
+    power: &Power,
+    conn: &Connection,
+    session: &mut usize,
+) {
+    if curr != power.status {
+        if let Ok(s) = create_session(power, conn) {
+            *session = s;
+        } else {
+            eprintln!("Failed to create new session");
+        }
     }
 }
