@@ -1,0 +1,5 @@
+#!/sbin/openrc-run
+
+description="Script to execute batt_log"
+command="/usr/local/bin/batt_log"
+command_args=""

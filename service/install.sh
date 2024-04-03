@@ -31,7 +31,7 @@ if [[ "${install_service,,}" =~ ^(y|)$ ]]; then
 fi
 
 declare -A services
-services=(["systemd"]="systemd" ["runit"]="runit")
+services=(["systemd"]="systemd" ["runit"]="runit" ["init"]="openrc")
 
 systemd() {
     chmod +x services/systemd/batt_log.service
@@ -46,6 +46,13 @@ runit() {
     cp -r services/runit /etc/sv/batt_log
     ln -sv /etc/sv/batt_log /var/service
     sv up batt_log
+}
+
+openrc() {
+    chmod +x services/openrc/batt_log
+    cp services/openrc/batt_log /etc/init.d/
+    rc-update add batt_log default
+    rc-service batt_log start
 }
 
 ${services[$INIT_SYSTEM]}
