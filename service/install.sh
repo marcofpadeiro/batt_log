@@ -5,6 +5,11 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+INIT=$(ps --no-headers -o comm 1)
+
+chmod +x services/systemd/batt_log.service
+chmod +x services/runit/run
+
 cargo build --release
 
 if [ $? -ne 0 ]; then
@@ -17,29 +22,29 @@ cp target/release/batt_log /usr/local/bin/
 echo "Installed batt_log to /usr/local/bin/"
 echo "You can now run batt_log from the terminal."
 
-read -p "Do you want to install batt_log as a service? [y/n]: " install_service
+echo "Detected init: $INIT"
+read -p "Do you want to install batt_log as a service? [Y/n]: " install_service
+
+if [ "$install_service" = "" ]; then
+    install_service="y"
+fi
 
 if [ "$install_service" != "y" ]; then
     exit 0
 fi
 
-echo "[Unit]
-Description=batt_log service
+if [ "$INIT" = "systemd" ]; then 
+    cp services/systemd/batt_log.service /etc/systemd/system/
 
-[Service]
-ExecStart=/usr/local/bin/batt_log
-Restart=always
-User=$(whoami)
+    systemctl daemon-reload
+    systemctl enable batt_log
+    systemctl restart batt_log
+elif [ "$INIT" = "runit"  ];
+then
+    cp -r services/runit /etc/sv/batt_log
+    ln -sv /etc/sv/batt_log /var/service
+    sv up batt_log
+fi
 
-[Install]
-WantedBy=multi-user.target
-" > batt_log.service
 
-chmod +x batt_log.service
-mv batt_log.service /etc/systemd/system/
-
-systemctl enable batt_log
-
-echo "Installed batt_log as a service."
-echo "On next boot, batt_log will start automatically."
-
+echo "Installed batt_log as a service successfully."
