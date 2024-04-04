@@ -1,15 +1,17 @@
+pub mod config;
 pub mod database;
 
 use batt_log::Power;
+use config::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::{thread::sleep, time::Duration};
 
-const POLLING_INTERVAL: Duration = Duration::from_secs(60);
-const DB_PATH: &str = "/home/marco/.cache/batt.db";
-
 fn main() {
-    let conn = Connection::open(DB_PATH).expect("Failed to connect to database");
+    let config = Config::new();
+
+    let conn = Connection::open(&config.db_path)
+        .expect("Failed to connect to database. Check permissions.");
 
     initialize_tables(&conn).expect("Failed to initialize tables");
 
@@ -37,7 +39,7 @@ fn main_loop(mut power: Power, conn: Connection, mut session: usize) -> ! {
             }
         }
 
-        sleep(POLLING_INTERVAL);
+        sleep(Duration::from_secs(1));
     }
 }
 

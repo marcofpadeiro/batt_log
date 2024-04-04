@@ -1,0 +1,2 @@
+db_path = "/var/lib/batt_log/log.db"
+polling_interval = 60

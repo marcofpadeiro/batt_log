@@ -2,15 +2,14 @@ package main
 
 import (
 	"database/sql"
-	"log"
-	"os"
-
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", os.Getenv("HOME")+"/.cache/batt.db")
+	config := NewConfig()
 
+	db, err := sql.Open("sqlite3", config.DBPath)
 	if err != nil {
 		log.Fatal(err)
 	}

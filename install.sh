@@ -20,6 +20,14 @@ fi
 
 cp target/release/batt_log /usr/local/bin/
 
+mkdir -p /etc/batt_log
+cp etc/config.toml /etc/batt_log/
+
+mkdir -p /var/lib/batt_log
+chown $(whoami):$(whoami) /var/lib/batt_log
+chmod u+rw /var/lib/batt_log
+chmod g+rw /var/lib/batt_log
+
 echo "Installed batt_log to /usr/local/bin/batt_log"
 echo "You can now run batt_log from the terminal."
 
@@ -34,27 +42,27 @@ declare -A services
 services=(["systemd"]="systemd" ["runit"]="runit" ["init"]="openrc")
 
 systemd() {
-    chmod +x services/systemd/batt_log.service
-    cp services/systemd/batt_log.service /etc/systemd/system/
+    chmod +x contrib/systemd/batt_log.service
+    cp contrib/systemd/batt_log.service /etc/systemd/system/
     systemctl daemon-reload
     systemctl enable batt_log
     systemctl restart batt_log
 }
 
 runit() {
-    chmod +x services/runit/run
-    cp -r services/runit /etc/sv/batt_log
+    chmod +x contrib/runit/run
+    cp -r contrib/runit /etc/sv/batt_log
     ln -sv /etc/sv/batt_log /var/service
     sv up batt_log
 }
 
 openrc() {
-    chmod +x services/openrc/batt_log
-    cp services/openrc/batt_log /etc/init.d/
+    chmod +x contrib/openrc/batt_log
+    cp contrib/openrc/batt_log /etc/init.d/
     rc-update add batt_log default
     rc-service batt_log start
 }
 
-${services[$INIT_SYSTEM]}
+${contrib[$INIT_SYSTEM]}
 
 echo "Installed batt_log as a service successfully."
