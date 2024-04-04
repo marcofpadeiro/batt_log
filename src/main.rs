@@ -10,11 +10,6 @@ use std::thread::sleep;
 fn main() {
     let config = Config::new();
 
-    println!(
-        "Using configuration: {:#?}",
-        config.polling_interval.as_secs()
-    );
-
     let conn = Connection::open(&config.db_path)
         .expect("Failed to connect to database. Check permissions.");
 
