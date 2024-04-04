@@ -1,13 +1,18 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
 echo_failure() {
     echo >&2 ":: $1"
     exit 1
 }
 
 remove_file() {
-    rm -rf "$1" 2>&1 || echo_failure ":: Failed to remove $1."
-    echo ":: Successfully removed $1."
+    rm -rf "$1" 2>&1 || echo_failure "${RED}:: Failed${NC} to remove $1."
+    echo -e "${GREEN}:: Successfully${NC} removed $1."
 }
 
 uninstall_service() {
@@ -32,11 +37,11 @@ uninstall_service() {
             echo_failure "Unsupported init system: $init_system"
             ;;
     esac
-    echo ":: Uninstalled batt_log service successfully."
+    echo -e ":: Uninstalled batt_log service ${GREEN}successfully${NC}."
 }
 
 confirm_uninstall() {
-    echo -e ":: Detected init: $init_system\n"
+    echo -e ":: Detected init: ${CYAN}$init_system${NC}\n"
     read -p "Are you sure you want to uninstall batt_log? [Y/n]:" confirm
     
     if [[ ! "${confirm,,}" =~ ^(y|)$ ]]; then
@@ -45,14 +50,13 @@ confirm_uninstall() {
 }
 
 delete_logs_and_configs() {
-    echo ""
+    echo -e ""
     read -p "Do you wish to delete the database logs and config files? [Y/n]:" confirm
 
     if [[ "${confirm,,}" =~ ^(y|)$ ]]; then
         remove_file "/var/log/batt_log.db" &&
         remove_file "/etc/batt_log" && 
-        remove_file "/home/$(logname)/.config/batt_log" &&
-        echo ":: Removed database logs and config files."
+        remove_file "/home/$(logname)/.config/batt_log" 
     fi
 }
 
@@ -65,13 +69,13 @@ main() {
     
     confirm_uninstall
 
-    remove_file "/usr/local/bin/batt_log"
+    remove_file "/usr/local/bin/batt_log-daemon"
     
     uninstall_service "$init_system"
 
     delete_logs_and_configs
 
-    echo -e "\n:: Removed batt_log successfully."
+    echo -e "\n:: Removed batt_log ${GREEN}successfully${NC}."
 }
 
 main "$@"

@@ -2,7 +2,7 @@
 Description=batt_log service
 
 [Service]
-ExecStart=/usr/local/bin/batt_log
+ExecStart=/usr/local/bin/batt_log-daemon
 Restart=always
 User=$(whoami)
 

@@ -1,20 +1,25 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
 echo_failure() {
-    echo >&2 ":: $1"
+    echo -e >&2 "${RED}:: $1${NC}"
     exit 1
 }
 
 copy_file() {
-    cp "$1" "$2" 2>&1 || echo_failure ":: Failed to copy $1 to $2."
-    echo ":: Successfully copied $1 to $2."
+    cp "$1" "$2" 2>&1 || echo_failure "Failed to copy $1 to $2."
+    echo -e "${GREEN}:: Successfully${NC} copied $1 to $2."
 }
 
 initialize_database() {
-    touch /var/log/batt_log.db || echo_failure ":: Failed to create /var/log/batt_log.db."
+    touch /var/log/batt_log.db || echo_failure "Failed to create /var/log/batt_log.db."
     chown :$(logname) /var/log/batt_log.db &&
     chmod u+rw,g+rw /var/log/batt_log.db &&
-    echo ":: Initialized /var/log/batt_log.db."
+    echo -e "${CYAN}:: Initialized${NC} /var/log/batt_log.db."
 }
 
 install_service() {
@@ -32,7 +37,7 @@ install_service() {
             ;;
         "init")
             cp contrib/openrc/batt_log /etc/init.d/ && 
-            echo "command_user=\"$(logname):$(whoami)\"" >> /etc/init.d/batt_log && 
+            echo -e "command_user=\"$(logname):$(whoami)\"" >> /etc/init.d/batt_log && 
             chmod +x /etc/init.d/batt_log && 
             rc-update add batt_log default
             ;;
@@ -40,7 +45,23 @@ install_service() {
             echo_failure "Unsupported init system: $service_method"
             ;;
     esac
-    echo ":: Installed batt_log as a service successfully."
+    echo -e ":: Installed batt_log as a service ${GREEN}successfully${NC}."
+}
+
+install_tui() {
+    [ ! -f target/release/batt_log-tui ] && echo_failure "batt_log-tui binary not found. Please run ${CYAN}'cargo build --release --bin batt_log-tui'${RED} first."
+    copy_file "target/release/batt_log-tui" "/usr/local/bin/batt_log-tui"
+}
+
+ask() {
+    local answer
+    echo
+    read -p "$1 [Y/n]:" answer
+
+    if [[ "${answer,,}" =~ ^(y|)$ ]]; then
+        shift
+        $@
+    fi
 }
 
 main() {
@@ -49,24 +70,19 @@ main() {
     fi
 
     local init_system=$(ps --no-headers -o comm 1)
-    echo -e ":: Detected init: $init_system\n"
+    echo -e ":: Detected init: ${CYAN}$init_system${NC}\n"
 
-    [ ! -f target/release/batt_log ] && echo_failure "batt_log binary not found. Please run 'cargo build --release' first."
+    [ ! -f target/release/batt_log-daemon ] && echo_failure "batt_log-daemon binary not found. Please run ${CYAN}'cargo build --release'${RED} first."
 
-    copy_file "target/release/batt_log" "/usr/local/bin/"
+    copy_file "target/release/batt_log-daemon" "/usr/local/bin/batt_log-daemon"
 
     mkdir -p /etc/batt_log
     copy_file "etc/config.toml" "/etc/batt_log/config.toml"
 
     initialize_database
 
-    echo ""
-    read -p "Do you want to install batt_log as a service? [Y/n]:" install_service_answer
-    if [[ "${install_service_answer,,}" =~ ^(y|)$ ]]; then
-        install_service "$init_system"
-    else
-        exit 0
-    fi
+    ask "Do you want to install batt_log-tui to read the logs?" install_tui
+    ask "Do you want to install batt_log as a service?" install_service "$init_system"
 }
 
 main "$@"
