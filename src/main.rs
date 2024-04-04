@@ -5,10 +5,15 @@ use batt_log::Power;
 use config::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
-use std::{thread::sleep, time::Duration};
+use std::thread::sleep;
 
 fn main() {
     let config = Config::new();
+
+    println!(
+        "Using configuration: {:#?}",
+        config.polling_interval.as_secs()
+    );
 
     let conn = Connection::open(&config.db_path)
         .expect("Failed to connect to database. Check permissions.");
@@ -24,10 +29,10 @@ fn main() {
 
     let session = create_session(&power, &conn).expect("Failed to create initial session");
 
-    main_loop(power, conn, session)
+    main_loop(power, conn, session, &config)
 }
 
-fn main_loop(mut power: Power, conn: Connection, mut session: usize) -> ! {
+fn main_loop(mut power: Power, conn: Connection, mut session: usize, config: &Config) -> ! {
     loop {
         let curr = power.status.clone();
 
@@ -39,7 +44,7 @@ fn main_loop(mut power: Power, conn: Connection, mut session: usize) -> ! {
             }
         }
 
-        sleep(Duration::from_secs(1));
+        sleep(config.polling_interval);
     }
 }
 

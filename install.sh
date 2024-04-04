@@ -46,23 +46,20 @@ systemd() {
     cp contrib/systemd/batt_log.service /etc/systemd/system/
     systemctl daemon-reload
     systemctl enable batt_log
-    systemctl restart batt_log
 }
 
 runit() {
     chmod +x contrib/runit/run
     cp -r contrib/runit /etc/sv/batt_log
     ln -sv /etc/sv/batt_log /var/service
-    sv up batt_log
 }
 
 openrc() {
     chmod +x contrib/openrc/batt_log
     cp contrib/openrc/batt_log /etc/init.d/
     rc-update add batt_log default
-    rc-service batt_log start
 }
 
-${contrib[$INIT_SYSTEM]}
+${services[$INIT_SYSTEM]}
 
 echo "Installed batt_log as a service successfully."

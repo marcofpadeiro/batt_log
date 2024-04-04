@@ -3,3 +3,5 @@
 description="Script to execute batt_log"
 command="/usr/local/bin/batt_log"
 command_args=""
+command_background="yes"
+pidfile="/run/batt_log.pid"

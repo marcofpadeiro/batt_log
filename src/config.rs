@@ -23,26 +23,35 @@ impl Config {
     }
 
     pub fn new() -> Self {
-        let config = CONFIG_PATHS
+        CONFIG_PATHS
             .iter()
-            .find(|path| std::path::Path::new(&replace_home(path)).exists())
-            .unwrap_or(&CONFIG_PATHS[1]);
-
-        let config = std::fs::read_to_string(config).unwrap_or_else(|_| {
-            eprintln!("Failed to read config file. Using default configuration.");
-            toml::to_string(&Config::default()).unwrap()
-        });
-
-        toml::from_str(&config).unwrap_or_else(|_| {
-            eprintln!("Failed to parse config file. Using default configuration.");
-            Config::default()
-        })
+            .map(|path| replace_home(path))
+            .find_map(|path| match std::fs::read_to_string(&path) {
+                Ok(config_str) => match toml::from_str::<Config>(&config_str) {
+                    Ok(config) => {
+                        eprintln!("Using configuration: {}", path);
+                        Some(config)
+                    }
+                    Err(_) => {
+                        eprintln!("Invalid TOML format in config file: {}", path);
+                        None
+                    }
+                },
+                Err(_) => {
+                    eprintln!("Failed to read config file: {}", path);
+                    None
+                }
+            })
+            .unwrap_or_else(|| {
+                eprintln!("Failed to read or parse config file. Using default configuration.");
+                Config::default()
+            })
     }
 }
 
 fn replace_home(path: &str) -> String {
     if let Some(home) = home_dir() {
-        path.replace("~", home.to_str().unwrap())
+        path.replacen("~", home.to_str().unwrap(), 1)
     } else {
         path.to_string()
     }
