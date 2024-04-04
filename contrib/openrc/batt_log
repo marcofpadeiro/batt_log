@@ -5,3 +5,15 @@ command="/usr/local/bin/batt_log"
 command_args=""
 command_background="yes"
 pidfile="/run/batt_log.pid"
+
+start() {
+        ebegin "Starting batt_log"
+        start-stop-daemon --start --quiet --exec ${command} ${command_args} --background --make-pidfile --pidfile=${pidfile}
+        eend $?
+}
+
+stop() {
+        ebegin "Stopping batt_log"
+        start-stop-daemon --stop --quiet --pidfile ${pidfile}
+        eend $?
+}
