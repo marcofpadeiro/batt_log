@@ -28,7 +28,7 @@ uninstall_service() {
             rm -rf /etc/sv/batt_log
             remove_file "/var/service/batt_log"
             ;;
-        "openrc")
+        "init")
             rc-service batt_log stop
             rc-update del batt_log default
             remove_file "/etc/init.d/batt_log"
@@ -54,7 +54,7 @@ delete_logs_and_configs() {
     read -p "Do you wish to delete the database logs and config files? [Y/n]:" confirm
 
     if [[ "${confirm,,}" =~ ^(y|)$ ]]; then
-        remove_file "/var/log/batt_log.db" &&
+        remove_file "/var/log/batt_log" &&
         remove_file "/etc/batt_log" && 
         remove_file "/home/$(logname)/.config/batt_log" 
     fi

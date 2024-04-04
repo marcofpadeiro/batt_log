@@ -19,7 +19,7 @@ pub struct Config {
 impl Config {
     fn default() -> Self {
         Self {
-            log_path: "/var/log/batt_log.db".to_string(),
+            log_path: "/var/log/batt_log/log.db".to_string(),
             polling_interval: Duration::from_secs(60),
         }
     }

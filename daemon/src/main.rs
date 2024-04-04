@@ -6,7 +6,9 @@ use common::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::thread::sleep;
-use utils::{get_powerdraw, get_total_capacity, refresh_battery_info};
+use utils::{get_powerdraw, refresh_battery_info};
+
+use crate::utils::get_current_battery;
 
 fn main() -> Result<(), battery::Error> {
     let config = Config::new();
@@ -50,7 +52,8 @@ fn main_loop(
                 }
             }
 
-            let total_capacity = get_total_capacity(&batteries);
+            let total_capacity = get_current_battery(&batteries);
+            println!("Total capacity: {}", total_capacity);
             let powerdraw = get_powerdraw(&batteries);
             if let Err(e) = create_event(&total_capacity, &powerdraw, &session, &conn) {
                 eprintln!("Failed to create event: {}", e);

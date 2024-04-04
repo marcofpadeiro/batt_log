@@ -50,7 +50,7 @@ fn initialize_event_table(conn: &Connection) -> Result<usize, rusqlite::Error> {
             session_id INTEGER,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             capacity INTEGER,
-            power_draw INTEGER
+            power_draw FLOAT
         )",
         [],
     )

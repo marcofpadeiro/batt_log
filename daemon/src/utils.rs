@@ -10,10 +10,10 @@ pub fn refresh_battery_info(
     Ok(())
 }
 
-pub fn get_total_capacity(batteries: &[Battery]) -> u32 {
+pub fn get_current_battery(batteries: &[Battery]) -> u32 {
     batteries
         .iter()
-        .map(|b| b.state_of_charge().value as u32)
+        .map(|b| (b.state_of_charge().value as f32 * 100.0).round() as u32)
         .sum()
 }
 

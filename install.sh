@@ -16,10 +16,10 @@ copy_file() {
 }
 
 initialize_database() {
-    touch /var/log/batt_log.db || echo_failure "Failed to create /var/log/batt_log.db."
-    chown :$(logname) /var/log/batt_log.db &&
-    chmod u+rw,g+rw /var/log/batt_log.db &&
-    echo -e "${CYAN}:: Initialized${NC} /var/log/batt_log.db."
+    mkdir /var/log/batt_log ||  echo_failure "Failed to create /var/log/batt_log."
+    chown :$(logname) /var/log/batt_log &&
+    chmod u+rw,g+rw /var/log/batt_log &&
+    echo -e "${CYAN}:: Initialized${NC} /var/log/batt_log/"
 }
 
 install_service() {
