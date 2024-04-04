@@ -10,7 +10,7 @@ use std::thread::sleep;
 fn main() {
     let config = Config::new();
 
-    let conn = Connection::open(&config.db_path)
+    let conn = Connection::open(&config.log_path)
         .expect("Failed to connect to database. Check permissions.");
 
     initialize_tables(&conn).expect("Failed to initialize tables");

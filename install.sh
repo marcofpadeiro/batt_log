@@ -23,10 +23,10 @@ cp target/release/batt_log /usr/local/bin/
 mkdir -p /etc/batt_log
 cp etc/config.toml /etc/batt_log/
 
-mkdir -p /var/lib/batt_log
-chown :$(logname) /var/lib/batt_log
-chmod u+rw /var/lib/batt_log
-chmod g+rw /var/lib/batt_log
+touch -p /var/log/batt_log.db
+chown :$(logname) /var/log/batt_log.db
+chmod u+rw /var/log/batt_log.db
+chmod g+rw /var/log/batt_log.db
 
 echo "Installed batt_log to /usr/local/bin/batt_log"
 echo "You can now run batt_log from the terminal."

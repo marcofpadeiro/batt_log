@@ -1,2 +1,2 @@
-db_path = "/var/lib/batt_log/log.db"
+log_path = "/var/log/batt_log.db"
 polling_interval = 60

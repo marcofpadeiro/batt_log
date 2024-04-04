@@ -45,7 +45,7 @@ echo "Removed batt_log successfully."
 read -p "Do you wish to delete the database logs and config files? [Y/n]:" uninstall
 
 if [[ "${uninstall,,}" =~ ^(y|)$ ]]; then
-    rm -rf /var/lib/batt_log
+    rm -rf /var/log/batt_log.db
     rm -rf /etc/batt_log
     rm -rf /home/$(logname)/.config/batt_log
     echo "Removed database logs and config files."

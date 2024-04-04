@@ -2,14 +2,16 @@ use std::time::Duration;
 
 use home::home_dir;
 
-const CONFIG_PATHS: [&str; 2] = [
+const CONFIG_PATHS: [&str; 4] = [
     "~/.config/batt_log/config.toml",
+    "~/.config/batt_log.toml",
+    "~/.batt_log.toml",
     "/etc/batt_log/config.toml",
 ];
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct Config {
-    pub db_path: String,
+    pub log_path: String,
     #[serde(with = "serde_humanize_rs")]
     pub polling_interval: Duration,
 }
@@ -17,7 +19,7 @@ pub struct Config {
 impl Config {
     fn default() -> Self {
         Self {
-            db_path: "/var/lib/batt_log/log.db".to_string(),
+            log_path: "/var/log/batt_log.db".to_string(),
             polling_interval: Duration::from_secs(60),
         }
     }
@@ -58,7 +60,7 @@ fn replace_home(path: &str) -> String {
 }
 
 mod serde_humanize_rs {
-    use serde::{self, Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize, Deserializer, Serializer};
     use std::time::Duration;
 
     pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
