@@ -58,7 +58,7 @@ fn replace_home(path: &str) -> String {
 }
 
 mod serde_humanize_rs {
-    use serde::{self, Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize, Deserializer, Serializer};
     use std::time::Duration;
 
     pub fn serialize<S>(duration: &Duration, serializer: S) -> Result<S::Ok, S::Error>
