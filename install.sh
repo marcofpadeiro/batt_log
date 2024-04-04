@@ -24,7 +24,7 @@ mkdir -p /etc/batt_log
 cp etc/config.toml /etc/batt_log/
 
 mkdir -p /var/lib/batt_log
-chown $(whoami):$(whoami) /var/lib/batt_log
+chown :$(logname) /var/lib/batt_log
 chmod u+rw /var/lib/batt_log
 chmod g+rw /var/lib/batt_log
 
@@ -55,8 +55,9 @@ runit() {
 }
 
 openrc() {
-    chmod +x contrib/openrc/batt_log
     cp contrib/openrc/batt_log /etc/init.d/
+    echo "command_user=\"$(logname):$(whoami)\"" >> /etc/init.d/batt_log
+    chmod +x /etc/init.d/batt_log
     rc-update add batt_log default
 }
 
