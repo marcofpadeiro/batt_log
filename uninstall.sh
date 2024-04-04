@@ -1,52 +1,78 @@
-#/bin/bash
+#!/bin/bash
 
-if [ "$(id -u)" != "0" ]; then
-    echo "This script must be run as root" 1>&2
+echo_failure() {
+    echo >&2 ":: $1"
     exit 1
-fi
+}
 
-# Will either be systemd, runit, or init
-INIT_SYSTEM=$(ps --no-headers -o comm 1)
+remove_file() {
+    rm -rf "$1" 2>&1 || echo_failure ":: Failed to remove $1."
+    echo ":: Successfully removed $1."
+}
 
-echo "Detected init: $INIT_SYSTEM"
-read -p "Are you sure you want to uninstall batt_log? [Y/n]:" uninstall
+uninstall_service() {
+    case $1 in
+        "systemd")
+            systemctl stop batt_log
+            systemctl disable batt_log
+            remove_file "/etc/systemd/system/batt_log.service"
+            systemctl daemon-reload
+            ;;
+        "runit")
+            sv down batt_log
+            rm -rf /etc/sv/batt_log
+            remove_file "/var/service/batt_log"
+            ;;
+        "openrc")
+            rc-service batt_log stop
+            rc-update del batt_log default
+            remove_file "/etc/init.d/batt_log"
+            ;;
+        *)
+            echo_failure "Unsupported init system: $init_system"
+            ;;
+    esac
+    echo ":: Uninstalled batt_log service successfully."
+}
+
+confirm_uninstall() {
+    echo -e ":: Detected init: $init_system\n"
+    read -p "Are you sure you want to uninstall batt_log? [Y/n]:" confirm
     
-if [[ ! "${uninstall,,}" =~ ^(y|)$ ]]; then
-    exit 0
-fi
-
-declare -A services
-services=(["systemd"]="systemd" ["runit"]="runit" ["init"]="openrc")
-
-rm /usr/local/bin/batt_log
-
-systemd() {
-    systemctl stop batt_log
-    systemctl disable batt_log
-    rm /etc/systemd/system/batt_log.service
-    systemctl daemon-reload
+    if [[ ! "${confirm,,}" =~ ^(y|)$ ]]; then
+        exit 0
+    fi
 }
 
-runit() {
-    sv down batt_log
-    rm -rf /etc/sv/batt_log
-    rm /var/service/batt_log
+delete_logs_and_configs() {
+    echo ""
+    read -p "Do you wish to delete the database logs and config files? [Y/n]:" confirm
+
+    if [[ "${confirm,,}" =~ ^(y|)$ ]]; then
+        remove_file "/var/log/batt_log.db" &&
+        remove_file "/etc/batt_log" && 
+        remove_file "/home/$(logname)/.config/batt_log" &&
+        echo ":: Removed database logs and config files."
+    fi
 }
 
-openrc() {
-    rc-service batt_log stop
-    rc-update del batt_log default
-    rm /etc/init.d/batt_log
+main() {
+    if [ "$(id -u)" != "0" ]; then
+        echo_failure "This script must be run as root"
+    fi
+
+    local init_system=$(ps --no-headers -o comm 1)
+    
+    confirm_uninstall
+
+    remove_file "/usr/local/bin/batt_log"
+    
+    uninstall_service "$init_system"
+
+    delete_logs_and_configs
+
+    echo -e "\n:: Removed batt_log successfully."
 }
 
-${services[$INIT_SYSTEM]}
+main "$@"
 
-echo "Removed batt_log successfully."
-read -p "Do you wish to delete the database logs and config files? [Y/n]:" uninstall
-
-if [[ "${uninstall,,}" =~ ^(y|)$ ]]; then
-    rm -rf /var/log/batt_log.db
-    rm -rf /etc/batt_log
-    rm -rf /home/$(logname)/.config/batt_log
-    echo "Removed database logs and config files."
-fi
