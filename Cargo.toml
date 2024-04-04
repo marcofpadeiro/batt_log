@@ -11,3 +11,15 @@ home = "0.5.9"
 rusqlite = "0.31.0"
 serde = { version = "1.0.197", features = ["serde_derive"] }
 toml = "0.8.12"
+
+[lib]
+name = "common"
+path = "common/src/config.rs"
+
+[[bin]]
+name = "batt_log-daemon"
+path = "daemon/src/main.rs"
+
+[[bin]]
+name = "batt_log-tui"
+path = "tui/src/main.rs"

@@ -1,12 +1,12 @@
-pub mod config;
 pub mod database;
+pub mod utils;
 
-use batt_log::{get_powerdraw, get_total_capacity, refresh_battery_info};
 use battery::{Battery, Manager};
-use config::Config;
+use common::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::thread::sleep;
+use utils::{get_powerdraw, get_total_capacity, refresh_battery_info};
 
 fn main() -> Result<(), battery::Error> {
     let config = Config::new();

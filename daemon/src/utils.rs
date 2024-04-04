@@ -1,4 +1,3 @@
-pub mod config;
 use battery::{Battery, Manager};
 
 pub fn refresh_battery_info(

@@ -39,10 +39,7 @@ impl Config {
                         None
                     }
                 },
-                Err(_) => {
-                    eprintln!("Failed to read config file: {}", path);
-                    None
-                }
+                Err(_) => None,
             })
             .unwrap_or_else(|| {
                 eprintln!("Failed to read or parse config file. Using default configuration.");
