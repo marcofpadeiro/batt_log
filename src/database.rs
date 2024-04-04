@@ -1,10 +1,10 @@
-use batt_log::Power;
+use battery::State;
 use rusqlite::Connection;
 
-pub fn create_session(power: &Power, conn: &Connection) -> Result<usize, rusqlite::Error> {
+pub fn create_session(current_state: &State, conn: &Connection) -> Result<usize, rusqlite::Error> {
     let query = format!(
         "INSERT INTO sessions (session_type) VALUES ('{}')",
-        power.status.to_string()
+        current_state.to_string()
     );
 
     conn.execute(&query, [])?;
@@ -13,13 +13,14 @@ pub fn create_session(power: &Power, conn: &Connection) -> Result<usize, rusqlit
 }
 
 pub fn create_event(
-    power: &Power,
-    conn: &Connection,
+    capacity: &u32,
+    power_draw: &u32,
     session_id: &usize,
+    conn: &Connection,
 ) -> Result<usize, rusqlite::Error> {
     let query = format!(
         "INSERT INTO events (session_id, capacity, power_draw) VALUES ({}, {}, {})",
-        session_id, power.capacity, power.power_draw
+        session_id, capacity, power_draw
     );
 
     conn.execute(&query, [])?;

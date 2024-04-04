@@ -1,13 +1,14 @@
 pub mod config;
 pub mod database;
 
-use batt_log::Power;
+use batt_log::{get_powerdraw, get_total_capacity, refresh_battery_info};
+use battery::{Battery, Manager};
 use config::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::thread::sleep;
 
-fn main() {
+fn main() -> Result<(), battery::Error> {
     let config = Config::new();
 
     let conn = Connection::open(&config.log_path)
@@ -15,45 +16,47 @@ fn main() {
 
     initialize_tables(&conn).expect("Failed to initialize tables");
 
-    let mut power: Power = Power::default();
+    let manager = Manager::new().expect("Failed to create battery manager");
+    let batteries = manager
+        .batteries()
+        .expect("Failed to get batteries")
+        .map(|b| b.expect("Failed to get battery"))
+        .collect::<Vec<Battery>>();
 
-    power.update().unwrap_or_else(|e| {
-        eprintln!("Failed to initialize power: {}", e);
-        std::process::exit(1);
-    });
+    let current_status = batteries.get(0).unwrap().state();
+    let session = create_session(&current_status, &conn).expect("Failed to create initial session");
 
-    let session = create_session(&power, &conn).expect("Failed to create initial session");
-
-    main_loop(power, conn, session, &config)
+    main_loop(manager, batteries, conn, session, &config)
 }
 
-fn main_loop(mut power: Power, conn: Connection, mut session: usize, config: &Config) -> ! {
+fn main_loop(
+    mut manager: Manager,
+    mut batteries: Vec<Battery>,
+    conn: Connection,
+    mut session: usize,
+    config: &Config,
+) -> Result<(), battery::Error> {
     loop {
-        let curr = power.status.clone();
+        let current_status = batteries.get(0).unwrap().state();
 
-        if let Ok(_) = power.update() {
-            change_session_if_status_changed(curr, &power, &conn, &mut session);
+        if let Ok(()) = refresh_battery_info(&mut manager, &mut batteries) {
+            let updated_status = batteries.get(0).unwrap().state();
 
-            if let Err(e) = create_event(&power, &conn, &session) {
+            if current_status != updated_status {
+                if let Ok(s) = create_session(&updated_status, &conn) {
+                    session = s;
+                } else {
+                    eprintln!("Failed to create new session");
+                }
+            }
+
+            let total_capacity = get_total_capacity(&batteries);
+            let powerdraw = get_powerdraw(&batteries);
+            if let Err(e) = create_event(&total_capacity, &powerdraw, &session, &conn) {
                 eprintln!("Failed to create event: {}", e);
             }
         }
 
         sleep(config.polling_interval);
-    }
-}
-
-fn change_session_if_status_changed(
-    curr: batt_log::Status,
-    power: &Power,
-    conn: &Connection,
-    session: &mut usize,
-) {
-    if curr != power.status {
-        if let Ok(s) = create_session(power, conn) {
-            *session = s;
-        } else {
-            eprintln!("Failed to create new session");
-        }
     }
 }
