@@ -8,6 +8,7 @@ use ratatui::{
     widgets::{Paragraph, Widget},
     Terminal,
 };
+use rusqlite::Connection;
 use tui::SessionList;
 
 pub struct App {
@@ -15,10 +16,10 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
-        //Self {
-        todo!("Query database");
-        //}
+    pub fn new(conn: Connection) -> Self {
+        Self {
+            items: SessionList::new(conn),
+        }
     }
 
     pub fn run(&mut self, mut terminal: Terminal<impl Backend>) -> Result<(), Box<dyn Error>> {
@@ -32,6 +33,8 @@ impl App {
                         Char('q') | Esc => return Ok(()),
                         Char('j') | Down => self.items.next(),
                         Char('k') | Up => self.items.previous(),
+                        Char('l') | Left => self.items.previous_page(),
+                        Char('h') | Right => self.items.next_page(),
                         Char('g') => self.items.go_top(),
                         Char('G') => self.items.go_bottom(),
                         _ => {}
