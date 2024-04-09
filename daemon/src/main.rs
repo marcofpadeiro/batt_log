@@ -1,14 +1,11 @@
 pub mod database;
-pub mod utils;
 
 use battery::{Battery, Manager};
+use daemon::*;
 use common::Config;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::thread::sleep;
-use utils::{get_powerdraw, refresh_battery_info};
-
-use crate::utils::get_current_battery;
 
 fn main() -> Result<(), battery::Error> {
     let config = Config::new();
