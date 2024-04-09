@@ -14,3 +14,5 @@ path = "src/lib.rs"
 
 [dependencies]
 common = { path = "../common" }
+crossterm = "0.27.0"
+ratatui = "0.26.1"
