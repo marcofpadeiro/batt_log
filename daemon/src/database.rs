@@ -14,12 +14,12 @@ pub fn create_session(current_state: &State, conn: &Connection) -> Result<usize,
 
 pub fn create_event(
     capacity: &u32,
-    power_draw: &u32,
+    power_draw: &f32,
     session_id: &usize,
     conn: &Connection,
 ) -> Result<usize, rusqlite::Error> {
     let query = format!(
-        "INSERT INTO events (session_id, capacity, power_draw) VALUES ({}, {}, {})",
+        "INSERT INTO events (session_id, capacity, power_draw) VALUES ({}, {}, {:.2})",
         session_id, capacity, power_draw
     );
 

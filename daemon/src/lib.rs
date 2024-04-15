@@ -17,6 +17,6 @@ pub fn get_current_battery(batteries: &[Battery]) -> u32 {
         .sum()
 }
 
-pub fn get_powerdraw(batteries: &[Battery]) -> u32 {
-    batteries.iter().map(|b| b.energy_rate().value as u32).sum()
+pub fn get_powerdraw(batteries: &[Battery]) -> f32 {
+    batteries.iter().map(|b| b.energy_rate().value as f32).sum()
 }

@@ -1,8 +1,8 @@
 pub mod database;
 
 use battery::{Battery, Manager};
-use daemon::*;
 use common::Config;
+use daemon::*;
 use database::{create_event, create_session, initialize_tables};
 use rusqlite::Connection;
 use std::thread::sleep;
@@ -50,7 +50,6 @@ fn main_loop(
             }
 
             let total_capacity = get_current_battery(&batteries);
-            println!("Total capacity: {}", total_capacity);
             let powerdraw = get_powerdraw(&batteries);
             if let Err(e) = create_event(&total_capacity, &powerdraw, &session, &conn) {
                 eprintln!("Failed to create event: {}", e);
