@@ -4,7 +4,6 @@ Description=batt_log service
 [Service]
 ExecStart=/usr/local/bin/batt_log-daemon
 Restart=always
-User=$(whoami)
 
 [Install]
 WantedBy=multi-user.target

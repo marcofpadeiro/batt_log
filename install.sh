@@ -16,7 +16,7 @@ copy_file() {
 }
 
 initialize_database() {
-    mkdir /var/log/batt_log ||  echo_failure "Failed to create /var/log/batt_log."
+    mkdir -p /var/log/batt_log ||  echo_failure "Failed to create /var/log/batt_log."
     chown :$(logname) /var/log/batt_log &&
     chmod u+rw,g+rw /var/log/batt_log &&
     echo -e "${CYAN}:: Initialized${NC} /var/log/batt_log/"
